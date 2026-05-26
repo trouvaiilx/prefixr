@@ -1,0 +1,49 @@
+"""
+config.py
+─────────
+Single source of truth for every tuneable constant in the application.
+Changing a value here propagates everywhere without touching business logic or UI.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from pathlib import Path
+
+
+@dataclass(frozen=True)
+class Config:
+    # ── Paths ────────────────────────────────────────────────────────────────
+    # words.txt is expected beside the main.pyw entry-point, one word per line.
+    words_file: Path = field(
+        default_factory=lambda: Path(__file__).parent.parent / "words.txt"
+    )
+
+    # ── Search behaviour ─────────────────────────────────────────────────────
+    # Maximum number of results rendered at once.  Raise freely; bisect keeps
+    # the search O(log n + k) regardless, and rendering 20-50 QListWidgetItems
+    # is negligible on any modern GPU.
+    max_results: int = 50
+
+    # ── Window geometry ──────────────────────────────────────────────────────
+    window_title: str = "Dictionary"
+    window_width: int = 640
+    window_height: int = 700
+    window_min_width: int = 380
+    window_min_height: int = 260
+
+    # ── Typography ───────────────────────────────────────────────────────────
+    # CSS font-family fallback chain used in the stylesheet.
+    # "Segoe UI" (Windows) → "SF Pro Text" (macOS) → "Inter" → generic sans.
+    font_family: str = (
+        "'Segoe UI', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif"
+    )
+    font_size_input: int = 22    # px — the main search field
+    font_size_results: int = 15  # px — result list items
+    font_size_status: int = 12   # px — footer status text
+
+    # ── Focus recovery ───────────────────────────────────────────────────────
+    # Milliseconds after a focusOut event before the search bar attempts to
+    # reclaim focus.  Small enough to be imperceptible; large enough to allow
+    # legitimate inter-widget focus transitions (e.g., OS dialogs) to settle.
+    focus_recovery_delay_ms: int = 60
