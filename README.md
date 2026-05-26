@@ -3,6 +3,21 @@
 A minimalist, ultra-fast desktop dictionary lookup tool built with Python + PySide6.
 Inspired by **Spotlight** and **Flow Launcher** — dark-mode, keyboard-driven, zero latency.
 
+```
+┌────────────────────────────────────────────────────┐
+│  pre█                                  [SHORT ↑]   │
+│  ────────────────────────────────────────────────  │
+│  pre                                               │
+│  preach                                            │
+│  precede                                           │
+│  precise                                           │
+│  prefer                                            │
+│  premier                                           │
+│  prepare                                           │
+│  …                                                 │
+└────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## Features
