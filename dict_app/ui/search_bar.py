@@ -33,10 +33,16 @@ class SearchBar(QLineEdit):
 
     Signals
     ───────
-    tab_pressed  — emitted when Tab is pressed; consumed so focus never leaves.
+    tab_pressed        — emitted when Tab is pressed; consumed so focus never leaves.
+    arrow_up_pressed   — emitted when ↑ is pressed (for result highlight navigation).
+    arrow_down_pressed — emitted when ↓ is pressed (for result highlight navigation).
+    enter_pressed      — emitted when Enter/Return is pressed.
     """
 
     tab_pressed: Signal = Signal()
+    arrow_up_pressed: Signal = Signal()
+    arrow_down_pressed: Signal = Signal()
+    enter_pressed: Signal = Signal()
 
     def __init__(self, cfg: Config, parent=None) -> None:
         super().__init__(parent)
@@ -66,6 +72,21 @@ class SearchBar(QLineEdit):
         if key == Qt.Key.Key_Escape:
             if self.text():
                 self.clear()
+            event.accept()
+            return
+
+        if key == Qt.Key.Key_Up:
+            self.arrow_up_pressed.emit()
+            event.accept()
+            return
+
+        if key == Qt.Key.Key_Down:
+            self.arrow_down_pressed.emit()
+            event.accept()
+            return
+
+        if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self.enter_pressed.emit()
             event.accept()
             return
 

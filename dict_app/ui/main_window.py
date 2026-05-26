@@ -8,6 +8,8 @@ Responsibilities
 ────────────────
 • Build and lay out all child widgets.
 • Connect signals to slots (textChanged → search, tab_pressed → toggle sort).
+• Forward arrow-key / Enter events from SearchBar to ResultsView for keyboard
+  navigation of results and used-word marking.
 • Enforce focus ownership: search bar always holds the keyboard caret when
   the application window is active.
 • Display match count and vocabulary size in the status footer.
@@ -135,6 +137,17 @@ class MainWindow(QMainWindow):
 
         footer.addStretch()
 
+        self._lbl_used = QLabel("")
+        self._lbl_used.setObjectName("status_used")
+        footer.addWidget(self._lbl_used)
+
+        self._reset_btn = QPushButton("Reset")
+        self._reset_btn.setObjectName("reset_button")
+        self._reset_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._reset_btn.setFixedHeight(22)
+        self._reset_btn.setVisible(False)
+        footer.addWidget(self._reset_btn)
+
         count_text = (
             f"{self._dictionary.word_count:,} words"
             if self._dictionary.is_loaded
@@ -152,6 +165,17 @@ class MainWindow(QMainWindow):
         self._search_bar.textChanged.connect(self._on_text_changed)
         self._search_bar.tab_pressed.connect(self._toggle_sort)
         self._sort_btn.clicked.connect(self._toggle_sort)
+
+        # Keyboard navigation of results
+        self._search_bar.arrow_down_pressed.connect(self._results_view.move_highlight_down)
+        self._search_bar.arrow_up_pressed.connect(self._results_view.move_highlight_up)
+        self._search_bar.enter_pressed.connect(self._on_enter_pressed)
+
+        # Word selection from results
+        self._results_view.word_selected.connect(self._on_word_selected)
+
+        # Reset used words
+        self._reset_btn.clicked.connect(self._on_reset_used)
 
     # ── Slots ─────────────────────────────────────────────────────────────────
 
@@ -180,6 +204,27 @@ class MainWindow(QMainWindow):
         # Re-search with the same prefix under the new order
         self._on_text_changed(self._search_bar.text())
         # Ensure keyboard focus stays on the input field
+        self._search_bar.setFocus(Qt.FocusReason.OtherFocusReason)
+
+    def _on_enter_pressed(self) -> None:
+        """Forward Enter to the results view if a highlight exists, then clear input."""
+        if self._results_view.has_highlight:
+            self._results_view.confirm_highlight()
+        # Always clear the input field on Enter
+        self._search_bar.clear()
+
+    def _on_word_selected(self, word: str) -> None:
+        """Mark the selected word as used and refresh the UI."""
+        self._dictionary.mark_used(word)
+        self._update_used_status()
+        # Re-run the search to immediately hide the used word
+        self._on_text_changed(self._search_bar.text())
+
+    def _on_reset_used(self) -> None:
+        """Clear all used words and refresh."""
+        self._dictionary.reset_used()
+        self._update_used_status()
+        self._on_text_changed(self._search_bar.text())
         self._search_bar.setFocus(Qt.FocusReason.OtherFocusReason)
 
     # ── Focus management ──────────────────────────────────────────────────────
@@ -212,3 +257,13 @@ class MainWindow(QMainWindow):
         if count >= self._cfg.max_results:
             return f"Top {count} shown"
         return f"{count} match{'es' if count != 1 else ''}"
+
+    def _update_used_status(self) -> None:
+        """Update the used-word counter in the footer and toggle reset button."""
+        used = self._dictionary.used_count
+        if used > 0:
+            self._lbl_used.setText(f"{used} used")
+            self._reset_btn.setVisible(True)
+        else:
+            self._lbl_used.setText("")
+            self._reset_btn.setVisible(False)
