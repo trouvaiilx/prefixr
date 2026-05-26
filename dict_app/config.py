@@ -27,9 +27,9 @@ class Config:
 
     # ── Window geometry ──────────────────────────────────────────────────────
     window_title: str = "Dictionary"
-    window_width: int = 640
+    window_width: int = 360
     window_height: int = 700
-    window_min_width: int = 380
+    window_min_width: int = 360
     window_min_height: int = 260
 
     # ── Typography ───────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ class Config:
         "'Segoe UI', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif"
     )
     font_size_input: int = 22    # px — the main search field
-    font_size_results: int = 15  # px — result list items
+    font_size_results: int = 20  # px — result list items
     font_size_status: int = 12   # px — footer status text
 
     # ── Focus recovery ───────────────────────────────────────────────────────
