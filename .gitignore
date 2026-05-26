@@ -1,4 +1,7 @@
 words.txt
+dist
+build
 venv
 __pycache__
 *.pyc
+*.spec

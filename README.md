@@ -84,6 +84,42 @@ completely decoupled from Qt and can be unit-tested with plain `pytest`.
 
 ---
 
+## Packaging into a single executable
+
+### 1 — Install PyInstaller
+
+```bash
+pip install pyinstaller
+```
+
+### 2 — Build
+
+```bash
+pyinstaller main.pyw \
+  --onefile \
+  --windowed \
+  --name "Dictionary" \
+  --add-data "words.txt:." \
+  --add-data "dict_app:dict_app"
+```
+
+On **Windows** use `;` instead of `:` as the separator:
+
+```bash
+pyinstaller main.pyw --onefile --windowed --name "Dictionary" --add-data "words.txt;." --add-data "dict_app;dict_app"
+```
+
+### 3 — Find your executable
+
+```bash
+dist/Dictionary.exe    # Windows
+dist/Dictionary        # macOS / Linux
+```
+
+The `words.txt` word list is bundled inside the executable — no external files needed.
+
+---
+
 ## Keyboard reference
 
 | Key | Action |
@@ -99,7 +135,7 @@ completely decoupled from Qt and can be unit-tested with plain `pytest`.
 
 ### Fuzzy matching
 Add a `fuzzy_search(query, …)` method to `Dictionary` using `rapidfuzz` or
-`difflib`.  Wire a second mode in `MainWindow` without touching `SearchBar`
+`difflib`. Wire a second mode in `MainWindow` without touching `SearchBar`
 or `ResultsView`.
 
 ### Inline definitions
@@ -108,7 +144,7 @@ Create a `DefinitionDelegate(QStyledItemDelegate)` in `ui/` and set it on
 `ResultsView` — zero changes to the search or focus logic.
 
 ### Frequency-based ranking
-Store per-word frequency scores alongside `_words`.  Pass an optional
+Store per-word frequency scores alongside `_words`. Pass an optional
 `weight_key` callable to `prefix_search()` and sort by `(len, -freq)`.
 
 ### Configuration file
