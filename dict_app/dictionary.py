@@ -63,8 +63,9 @@ class SortOrder(Enum):
 
 class Dictionary:
     """
-    Immutable after construction.  Thread-safe to read; never written to after
-    __init__ completes, so no locking is needed for concurrent reads.
+    Word-list engine.  The vocabulary is immutable after construction;
+    however a mutable ``_used`` set tracks words that the user has marked
+    as "used" so they can be hidden from future results until reset.
 
     Internal representation
     ───────────────────────
@@ -76,6 +77,7 @@ class Dictionary:
 
     def __init__(self, words_file: Path) -> None:
         self._words: list[str] = []
+        self._used: set[str] = set()
         self._load(words_file)
 
     # ── Construction ──────────────────────────────────────────────────────────
@@ -119,7 +121,8 @@ class Dictionary:
         max_results: int,
     ) -> list[str]:
         """
-        Return up to *max_results* words that start with *prefix*.
+        Return up to *max_results* words that start with *prefix*,
+        excluding any words in the used set.
 
         Algorithm
         ─────────
@@ -129,7 +132,8 @@ class Dictionary:
            Unicode code point, then bisect_left again → upper index.
         4. Slice self._words[lo:hi] — this is a O(k) copy where k is the
            number of matching words, bounded by the words list size.
-        5. Sort the slice by length; return the first max_results items.
+        5. Filter out used words.
+        6. Sort the slice by length; return the first max_results items.
 
         The overall complexity is O(log n + k·log k) where n = vocabulary
         size and k = number of prefix matches.  In practice k << n for any
@@ -164,11 +168,32 @@ class Dictionary:
         if not matches:
             return []
 
+        # Exclude used words
+        if self._used:
+            matches = [w for w in matches if w not in self._used]
+            if not matches:
+                return []
+
         # Sort by length; ties broken by lexicographic order (stable sort)
         reverse = sort_order is SortOrder.LONGEST_FIRST
         sorted_matches = sorted(matches, key=len, reverse=reverse)
 
         return sorted_matches[:max_results]
+
+    # ── Used-word management ──────────────────────────────────────────────────
+
+    def mark_used(self, word: str) -> None:
+        """Add *word* to the used set so it is hidden from future searches."""
+        self._used.add(word.lower())
+
+    def reset_used(self) -> None:
+        """Clear all used words, making every word searchable again."""
+        self._used.clear()
+
+    @property
+    def used_count(self) -> int:
+        """Number of words currently marked as used."""
+        return len(self._used)
 
     # ── Introspection ─────────────────────────────────────────────────────────
 

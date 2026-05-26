@@ -84,9 +84,11 @@ QListWidget#results_list::item {{
 
 QListWidget#results_list::item:selected,
 QListWidget#results_list::item:focus {{
-    background-color: transparent;
-    color: #c8c8e0;
+    background-color: #1e2a4a;
+    color: #a8c8ff;
     outline: none;
+    border-left: 2px solid #4f7ef8;
+    padding-left: 14px;
 }}
 
 QListWidget#results_list::item:hover {{
@@ -151,9 +153,39 @@ QPushButton#sort_button:pressed {{
     color: #ccccee;
 }}
 
+/* ── Reset button ──────────────────────────────────────────────────── */
+QPushButton#reset_button {{
+    background-color: transparent;
+    color: #666688;
+    border: 1px solid #2a2a3e;
+    border-radius: 4px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-family: {ff};
+    font-weight: 500;
+}}
+
+QPushButton#reset_button:hover {{
+    background-color: #26263a;
+    color: #aaaacc;
+    border-color: #3a3a5a;
+}}
+
+QPushButton#reset_button:pressed {{
+    background-color: #2e2e48;
+    color: #ccccee;
+}}
+
 /* ── Status / footer labels ─────────────────────────────────────────── */
 QLabel#status_matches {{
     color: #555570;
+    font-size: {fs}px;
+    font-family: {ff};
+    padding: 0 2px;
+}}
+
+QLabel#status_used {{
+    color: #4f7ef8;
     font-size: {fs}px;
     font-family: {ff};
     padding: 0 2px;
