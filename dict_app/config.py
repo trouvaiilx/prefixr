@@ -7,17 +7,22 @@ Changing a value here propagates everywhere without touching business logic or U
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+
+
+def _words_path() -> Path:
+    # When frozen by PyInstaller, bundled files are extracted to sys._MEIPASS.
+    # In normal development, fall back to the project root beside main.pyw.
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).parent.parent))
+    return base / "words.txt"
 
 
 @dataclass(frozen=True)
 class Config:
     # ── Paths ────────────────────────────────────────────────────────────────
-    # words.txt is expected beside the main.pyw entry-point, one word per line.
-    words_file: Path = field(
-        default_factory=lambda: Path(__file__).parent.parent / "words.txt"
-    )
+    words_file: Path = field(default_factory=_words_path)
 
     # ── Search behaviour ─────────────────────────────────────────────────────
     # Maximum number of results rendered at once.  Raise freely; bisect keeps
