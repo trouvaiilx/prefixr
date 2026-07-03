@@ -1,6 +1,6 @@
-# Desktop Dictionary
+# Prefixr
 
-A minimalist, ultra-fast desktop dictionary lookup tool built with Python + PySide6.
+A minimalist, ultra-fast desktop prefix-search tool built with Python + PySide6.
 Inspired by **Spotlight** and **Flow Launcher** — dark-mode, keyboard-driven, zero latency.
 
 ```
@@ -72,7 +72,7 @@ Or double-click `main.pyw` on Windows if `.pyw` is associated with `pythonw.exe`
 ```
 main.pyw                   Entry point (no console on Windows)
 words.txt                  Your word list — one word per line
-dict_app/
+prefixr/
 ├── __init__.py
 ├── config.py              All tuneable constants (frozen dataclass)
 ├── dictionary.py          Word loading, normalisation, bisect search
@@ -113,22 +113,22 @@ pip install pyinstaller
 pyinstaller main.pyw \
   --onefile \
   --windowed \
-  --name "Dictionary" \
+  --name "Prefixr" \
   --add-data "words.txt:." \
-  --add-data "dict_app:dict_app"
+  --add-data "prefixr:prefixr"
 ```
 
 On **Windows** use `;` instead of `:` as the separator:
 
 ```bash
-pyinstaller main.pyw --onefile --windowed --name "Dictionary" --add-data "words.txt;." --add-data "dict_app;dict_app"
+pyinstaller main.pyw --onefile --windowed --name "Prefixr" --add-data "words.txt;." --add-data "prefixr;prefixr"
 ```
 
 ### 3 — Find your executable
 
 ```bash
-dist/Dictionary.exe    # Windows
-dist/Dictionary        # macOS / Linux
+dist/Prefixr.exe    # Windows
+dist/Prefixr        # macOS / Linux
 ```
 
 The `words.txt` word list is bundled inside the executable — no external files needed.
@@ -164,5 +164,5 @@ Store per-word frequency scores alongside `_words`. Pass an optional
 
 ### Configuration file
 Replace `Config`'s `field(default_factory=…)` defaults with values read
-from a `~/.dict_app/config.toml` at import time — one change, propagates
+from a `~/.prefixr/config.toml` at import time — one change, propagates
 everywhere.

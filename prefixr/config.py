@@ -31,7 +31,7 @@ class Config:
     max_results: int = 50
 
     # ── Window geometry ──────────────────────────────────────────────────────
-    window_title: str = "Dictionary"
+    window_title: str = "Prefixr"
     window_width: int = 360
     window_height: int = 700
     window_min_width: int = 360

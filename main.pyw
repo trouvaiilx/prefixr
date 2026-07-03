@@ -24,9 +24,9 @@ import logging
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
-from dict_app.config import Config
-from dict_app.dictionary import Dictionary
-from dict_app.ui.main_window import MainWindow
+from prefixr.config import Config
+from prefixr.dictionary import Dictionary
+from prefixr.ui.main_window import MainWindow
 
 
 def _configure_logging() -> None:
@@ -45,8 +45,8 @@ def main() -> None:
     )
 
     app = QApplication(sys.argv)
-    app.setApplicationName("Dictionary")
-    app.setOrganizationName("dict_app")
+    app.setApplicationName("Prefixr")
+    app.setOrganizationName("prefixr")
     # "Fusion" renders consistently across platforms and supports full
     # stylesheet customisation without OS theme interference.
     app.setStyle("Fusion")
