@@ -124,6 +124,14 @@ class Dictionary:
         self._words = words
         logger.info("Loaded %d words from %s", len(self._words), path)
 
+    def reload(self, words_file: Path) -> None:
+        """
+        Replace the current vocabulary with a new word file.
+        Clears the used-word set since it refers to the old vocabulary.
+        """
+        self._used.clear()
+        self._load(words_file)
+
     # ── Public API ────────────────────────────────────────────────────────────
 
     def prefix_search(
