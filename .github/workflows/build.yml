@@ -18,10 +18,10 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: "3.11"
         cache: 'pip'
@@ -49,7 +49,7 @@ jobs:
         pyinstaller main.pyw --onefile --windowed --name "Prefixr" --icon "icon.ico" --add-data "words.txt:." --add-data "icon.ico:." --add-data "prefixr:prefixr"
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: Prefixr-${{ runner.os }}
         path: dist/
