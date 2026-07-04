@@ -76,24 +76,20 @@ QListWidget#results_list {{
 }}
 
 QListWidget#results_list::item {{
-    padding: 5px 16px;
-    border-radius: 6px;
-    color: #c8c8e0;
-    letter-spacing: 0.3px;
+    padding: 0px;
+    border: none;
+    background-color: transparent;
 }}
 
 QListWidget#results_list::item:selected,
 QListWidget#results_list::item:focus {{
-    background-color: #1e2a4a;
-    color: #a8c8ff;
+    background-color: transparent;
     outline: none;
-    border-left: 2px solid #4f7ef8;
-    padding-left: 14px;
+    border: none;
 }}
 
 QListWidget#results_list::item:hover {{
-    background-color: #1e1e2c;
-    color: #e8e8f8;
+    background-color: transparent;
 }}
 
 /* ── Scroll bar ─────────────────────────────────────────────────────── */

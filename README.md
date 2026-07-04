@@ -26,7 +26,9 @@ Inspired by **Spotlight** and **Flow Launcher** — dark-mode, keyboard-driven, 
 |---|---|
 | **Prefix search** | `bisect_left` binary search — O(log n + k) on 466 k words |
 | **Always-focused input** | Caret returns automatically on Alt-Tab / window activation |
-| **Sort toggle** | `Tab` or the button flips between shortest-first ↔ longest-first |
+| **Sort toggle** | `Tab` or the button cycles shortest-first → random → longest-first |
+| **Prefix highlighting** | The typed prefix is highlighted in every result, at a glance |
+| **Background typing** | While Alt-Tabbed into another app, keeps tracking what you type and highlights each result green/red per letter — see below |
 | **Escape to clear** | Clears the search field; window stays open |
 | **No console** | `.pyw` entry-point suppresses the Windows console window |
 | **Dark mode** | Blue-tinted near-black palette, Spotlight-inspired |
@@ -38,8 +40,22 @@ Inspired by **Spotlight** and **Flow Launcher** — dark-mode, keyboard-driven, 
 ### 1 — Install dependencies
 
 ```bash
-pip install PySide6
+pip install PySide6 pynput
 ```
+
+`pynput` powers the background-typing feature (a system-wide keyboard hook
+that keeps working while another app is focused). Two platform notes:
+
+- **macOS**: the first time it runs, grant the terminal / app **Input
+  Monitoring** (and possibly **Accessibility**) permission under
+  *System Settings → Privacy & Security*, or the hook silently sees nothing.
+- **Linux**: works under X11. Under native **Wayland**, most compositors
+  block global key hooks for security reasons — background typing may not
+  function there, though the rest of the app is unaffected.
+
+If `pynput` isn't installed at all, Prefixr still runs fine — it just logs
+a warning and background typing is disabled; normal in-window search is
+unaffected either way.
 
 ### 2 — Add your word list
 
@@ -72,15 +88,17 @@ Or double-click `main.pyw` on Windows if `.pyw` is associated with `pythonw.exe`
 ```
 main.pyw                   Entry point (no console on Windows)
 words.txt                  Your word list — one word per line
+requirements.txt           Project dependencies
 prefixr/
 ├── __init__.py
-├── config.py              All tuneable constants (frozen dataclass)
-├── dictionary.py          Word loading, normalisation, bisect search
+├── config.py                All tuneable constants (frozen dataclass)
+├── dictionary.py            Word loading, normalisation, bisect search, sort orders
+├── global_key_listener.py   OS-level a-z/Backspace/Enter hook (pynput), Qt signals
 └── ui/
     ├── __init__.py
     ├── styles.py          Full dark-mode QSS stylesheet
     ├── search_bar.py      Always-focused QLineEdit + focus recovery
-    ├── results_view.py    Optimised QListWidget for rapid refresh
+    ├── results_view.py    Rich-text result rows: prefix highlight + typing overlay
     └── main_window.py     Mediator — wires all components together
 ```
 
@@ -141,8 +159,32 @@ The `words.txt` word list is bundled inside the executable — no external files
 |---|---|
 | Any letter | Instant prefix search |
 | `Backspace` | Narrow/widen search |
-| `Tab` | Toggle result sort order |
+| `Tab` | Cycle result sort order (shortest → random → longest) |
 | `Escape` | Clear search field |
+| `↑` / `↓` | Move the keyboard highlight through results |
+| `Enter` (focused) | Confirm the highlighted result / mark it used |
+
+---
+
+## Background typing (out-of-focus word tracking)
+
+Prefixr always stays on top, so a common flow is: type a prefix, Alt-Tab
+into whatever you're actually writing in (a game, a document, a terminal),
+and type out the full word there. Prefixr keeps watching:
+
+- Every letter you type — anywhere, in any app — is compared against each
+  visible result at the matching position: **green** if it's correct,
+  **red** if it isn't.
+- `Backspace` undoes the last letter, so a typo doesn't throw off the
+  highlighting.
+- The moment you press `Enter`, if what you've typed (prefix + everything
+  since) exactly matches one of the visible results, that word is marked
+  **used** automatically — exactly as if you'd clicked it.
+
+This only activates while the search field actually has a prefix in it —
+with an empty search field, no keystrokes are observed anywhere, focused or
+not. It's also a passive observer: it never blocks or consumes a keystroke,
+so the app you're typing into always receives every key normally.
 
 ---
 
