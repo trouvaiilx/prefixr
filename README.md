@@ -20,6 +20,18 @@ Inspired by **Spotlight** and **Flow Launcher** — dark-mode, keyboard-driven, 
 
 ---
 
+## Table of Contents
+
+- [Features](#features)
+- [Setup](#setup)
+- [Project structure](#project-structure)
+- [Packaging into a single executable](#packaging-into-a-single-executable)
+- [Keyboard reference](#keyboard-reference)
+- [Background typing (out-of-focus word tracking)](#background-typing-out-of-focus-word-tracking)
+- [Extending](#extending)
+
+---
+
 ## Features
 
 | Feature | Detail |
