@@ -44,6 +44,7 @@ Inspired by **Spotlight** and **Flow Launcher** — dark-mode, keyboard-driven, 
 | **Escape to clear** | Clears the search field; window stays open |
 | **No console** | `.pyw` entry-point suppresses the Windows console window |
 | **Dark mode** | Blue-tinted near-black palette, Spotlight-inspired |
+| **Wordlist switching** | Press `F1` to load a different `.txt` word list on the fly |
 
 ---
 
@@ -178,6 +179,7 @@ The `words.txt` word list is bundled inside the executable — no external files
 | `Escape` | Clear search field |
 | `↑` / `↓` | Move the keyboard highlight through results |
 | `Enter` (focused) | Confirm the highlighted result / mark it used |
+| `F1` | Open file picker to switch word list |
 
 ---
 

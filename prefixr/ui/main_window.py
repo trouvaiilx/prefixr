@@ -49,8 +49,11 @@ different application to actually type the word Prefixr found for them.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from PySide6.QtCore import QEvent, Qt
 from PySide6.QtWidgets import (
+    QFileDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -176,9 +179,9 @@ class MainWindow(QMainWindow):
             if self._dictionary.is_loaded
             else "no words loaded"
         )
-        lbl_count = QLabel(count_text)
-        lbl_count.setObjectName("status_wordcount")
-        footer.addWidget(lbl_count)
+        self._lbl_wordcount = QLabel(count_text)
+        self._lbl_wordcount.setObjectName("status_wordcount")
+        footer.addWidget(self._lbl_wordcount)
 
         root.addLayout(footer)
 
@@ -204,6 +207,9 @@ class MainWindow(QMainWindow):
         self._global_listener.letter_typed.connect(self._on_global_letter)
         self._global_listener.backspace_pressed.connect(self._on_global_backspace)
         self._global_listener.enter_pressed.connect(self._on_global_enter)
+
+        # Wordlist switching
+        self._search_bar.f1_pressed.connect(self._on_switch_wordlist)
 
     # ── Slots ─────────────────────────────────────────────────────────────────
 
@@ -353,3 +359,44 @@ class MainWindow(QMainWindow):
         else:
             self._lbl_used.setText("")
             self._reset_btn.setVisible(False)
+
+    def _on_switch_wordlist(self) -> None:
+        """
+        Open a file picker so the user can load a different word list.
+        Temporarily drops the always-on-top flag so the OS file dialog
+        isn't hidden behind the window.
+        """
+        # Let the file dialog appear above us
+        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, False)
+        self.show()  # re-apply flags
+
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select a word list",
+            "",
+            "Text files (*.txt);;All files (*)",
+        )
+
+        # Restore always-on-top
+        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
+        self.show()
+
+        if not path:
+            self._search_bar.setFocus(Qt.FocusReason.OtherFocusReason)
+            return
+
+        self._dictionary.reload(Path(path))
+
+        # Refresh all UI state
+        self._error_banner.setVisible(not self._dictionary.is_loaded)
+        count_text = (
+            f"{self._dictionary.word_count:,} words"
+            if self._dictionary.is_loaded
+            else "no words loaded"
+        )
+        self._lbl_wordcount.setText(count_text)
+        self._update_used_status()
+        self._search_bar.clear()
+        self._results_view.clear_display()
+        self._lbl_matches.setText(self._matches_text(0, empty=True))
+        self._search_bar.setFocus(Qt.FocusReason.OtherFocusReason)

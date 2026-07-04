@@ -43,6 +43,7 @@ class SearchBar(QLineEdit):
     arrow_up_pressed: Signal = Signal()
     arrow_down_pressed: Signal = Signal()
     enter_pressed: Signal = Signal()
+    f1_pressed: Signal = Signal()
 
     def __init__(self, cfg: Config, parent=None) -> None:
         super().__init__(parent)
@@ -87,6 +88,11 @@ class SearchBar(QLineEdit):
 
         if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             self.enter_pressed.emit()
+            event.accept()
+            return
+
+        if key == Qt.Key.Key_F1:
+            self.f1_pressed.emit()
             event.accept()
             return
 
