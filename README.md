@@ -88,6 +88,7 @@ Or double-click `main.pyw` on Windows if `.pyw` is associated with `pythonw.exe`
 ```
 main.pyw                   Entry point (no console on Windows)
 words.txt                  Your word list — one word per line
+icon.ico                   Application icon
 requirements.txt           Project dependencies
 prefixr/
 ├── __init__.py
@@ -132,14 +133,16 @@ pyinstaller main.pyw \
   --onefile \
   --windowed \
   --name "Prefixr" \
+  --icon "icon.ico" \
   --add-data "words.txt:." \
+  --add-data "icon.ico:." \
   --add-data "prefixr:prefixr"
 ```
 
 On **Windows** use `;` instead of `:` as the separator:
 
 ```bash
-pyinstaller main.pyw --onefile --windowed --name "Prefixr" --add-data "words.txt;." --add-data "prefixr;prefixr"
+pyinstaller main.pyw --onefile --windowed --name "Prefixr" --icon "icon.ico" --add-data "words.txt;." --add-data "icon.ico;." --add-data "prefixr;prefixr"
 ```
 
 ### 3 — Find your executable

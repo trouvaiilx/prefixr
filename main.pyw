@@ -22,6 +22,7 @@ import sys
 import logging
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from prefixr.config import Config
@@ -52,6 +53,9 @@ def main() -> None:
     app.setStyle("Fusion")
 
     cfg = Config()
+    
+    if cfg.icon_file.exists():
+        app.setWindowIcon(QIcon(str(cfg.icon_file)))
     dictionary = Dictionary(cfg.words_file)
 
     window = MainWindow(dictionary, cfg)

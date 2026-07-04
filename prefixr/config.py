@@ -18,11 +18,16 @@ def _words_path() -> Path:
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).parent.parent))
     return base / "words.txt"
 
+def _icon_path() -> Path:
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).parent.parent))
+    return base / "icon.ico"
+
 
 @dataclass(frozen=True)
 class Config:
     # ── Paths ────────────────────────────────────────────────────────────────
     words_file: Path = field(default_factory=_words_path)
+    icon_file: Path = field(default_factory=_icon_path)
 
     # ── Search behaviour ─────────────────────────────────────────────────────
     # Maximum number of results rendered at once.  Raise freely; bisect keeps
