@@ -27,6 +27,24 @@ Three complementary mechanisms ensure uninterrupted typing flow:
 
 3. MainWindow.showEvent() → ensures the bar is focused on first display,
    overriding any default focus the OS might assign to another widget.
+
+Background typing (out-of-focus word tracking)
+────────────────────────────────────────────────
+While a prefix is present, a GlobalKeyListener hook observes a-z / Backspace
+/ Enter system-wide — including while the user has Alt-Tabbed into a
+different application to actually type the word Prefixr found for them.
+
+• Every observed letter is appended to ``self._typed_buffer`` and forwarded
+  to ResultsView, which colors each result green/red per-character.
+• Backspace pops the last buffered character (correcting a typo).
+• Enter looks for a result that exactly equals prefix + buffer and, if
+  found, marks it used — exactly as if the user had selected it by hand —
+  then clears the buffer so the next word starts fresh.
+• The hook is only *installed* while the search field is non-empty (no
+  background listening happens at all otherwise), and its events are only
+  *applied* while this window is not the active window — when the window
+  is focused, normal typing already goes through SearchBar/keyPressEvent,
+  so global events are ignored to avoid double-handling.
 """
 
 from __future__ import annotations
@@ -44,6 +62,7 @@ from PySide6.QtWidgets import (
 
 from ..config import Config
 from ..dictionary import Dictionary, SortOrder
+from ..global_key_listener import GlobalKeyListener
 from .results_view import ResultsView
 from .search_bar import SearchBar
 from .styles import SEARCH_PLACEHOLDER, build_stylesheet
@@ -60,6 +79,10 @@ class MainWindow(QMainWindow):
         self._dictionary = dictionary
         self._cfg = cfg
         self._sort_order: SortOrder = SortOrder.SHORTEST_FIRST
+
+        # Background-typing state (see module docstring)
+        self._typed_buffer: str = ""
+        self._global_listener = GlobalKeyListener(self)
 
         self._setup_window()
         self._build_ui()
@@ -123,7 +146,7 @@ class MainWindow(QMainWindow):
         root.addWidget(sep)
 
         # ── Results list ──────────────────────────────────────────────────
-        self._results_view = ResultsView()
+        self._results_view = ResultsView(self._cfg)
         root.addWidget(self._results_view, stretch=1)
 
         # ── Status footer ─────────────────────────────────────────────────
@@ -177,15 +200,26 @@ class MainWindow(QMainWindow):
         # Reset used words
         self._reset_btn.clicked.connect(self._on_reset_used)
 
+        # Background typing (out-of-focus word tracking)
+        self._global_listener.letter_typed.connect(self._on_global_letter)
+        self._global_listener.backspace_pressed.connect(self._on_global_backspace)
+        self._global_listener.enter_pressed.connect(self._on_global_enter)
+
     # ── Slots ─────────────────────────────────────────────────────────────────
 
     def _on_text_changed(self, text: str) -> None:
         """Called on every keystroke — must complete in < 16 ms for 60 fps."""
         prefix = text.strip()
 
+        # Any change to the prefix invalidates whatever the user was
+        # background-typing against the previous result set.
+        self._typed_buffer = ""
+
         if not prefix:
             self._results_view.clear_display()
             self._lbl_matches.setText(self._matches_text(0, empty=True))
+            # No prefix → no background keystroke detection at all.
+            self._global_listener.stop()
             return
 
         matches = self._dictionary.prefix_search(
@@ -193,8 +227,11 @@ class MainWindow(QMainWindow):
             self._sort_order,
             self._cfg.max_results,
         )
-        self._results_view.display(matches)
+        self._results_view.display(matches, prefix)
         self._lbl_matches.setText(self._matches_text(len(matches), empty=False))
+
+        # A prefix is present — start (or keep running) the background hook.
+        self._global_listener.start()
 
     def _toggle_sort(self) -> None:
         """Flip between shortest-first and longest-first, then re-run search."""
@@ -226,6 +263,55 @@ class MainWindow(QMainWindow):
         self._update_used_status()
         self._on_text_changed(self._search_bar.text())
         self._search_bar.setFocus(Qt.FocusReason.OtherFocusReason)
+
+    # ── Background typing (out-of-focus word tracking) ──────────────────────────
+
+    def _on_global_letter(self, ch: str) -> None:
+        """
+        A single a-z key was observed system-wide. Ignored while this window
+        is focused (normal typing already handles that via SearchBar), and
+        ignored if there's no prefix (shouldn't normally fire — the listener
+        is stopped in that case — but this is a cheap, harmless guard).
+        """
+        if self.isActiveWindow() or not self._search_bar.text().strip():
+            return
+        self._typed_buffer += ch
+        self._results_view.set_typed_overlay(self._typed_buffer)
+
+    def _on_global_backspace(self) -> None:
+        """Undo the last background-typed character, if any."""
+        if self.isActiveWindow() or not self._search_bar.text().strip():
+            return
+        if self._typed_buffer:
+            self._typed_buffer = self._typed_buffer[:-1]
+            self._results_view.set_typed_overlay(self._typed_buffer)
+
+    def _on_global_enter(self) -> None:
+        """
+        The user finished typing a word elsewhere and pressed Enter. If the
+        prefix + background-typed buffer exactly matches one of the current
+        results, mark that word as used — the same effect as selecting it
+        by hand — then reset the buffer for the next word.
+        """
+        if self.isActiveWindow() or not self._search_bar.text().strip():
+            return
+
+        matched = self._results_view.matched_word()
+        if matched is not None:
+            self._dictionary.mark_used(matched)
+            self._update_used_status()
+
+        self._typed_buffer = ""
+        # Re-run the search: refreshes the list (hiding the now-used word)
+        # and resets the overlay via ResultsView.display().
+        self._on_text_changed(self._search_bar.text())
+
+    # ── Lifecycle ─────────────────────────────────────────────────────────────
+
+    def closeEvent(self, event) -> None:
+        """Tear down the background OS hook so no thread outlives the window."""
+        self._global_listener.stop()
+        super().closeEvent(event)
 
     # ── Focus management ──────────────────────────────────────────────────────
 
