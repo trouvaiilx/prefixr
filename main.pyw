@@ -20,8 +20,9 @@ and show a brief spinner in MainWindow while waiting.
 
 import sys
 import logging
+from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSettings
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
@@ -56,7 +57,13 @@ def main() -> None:
     
     if cfg.icon_file.exists():
         app.setWindowIcon(QIcon(str(cfg.icon_file)))
-    dictionary = Dictionary(cfg.words_file)
+        
+    # Load the last used wordlist from persistent settings, or fall back to bundled
+    settings = QSettings()
+    saved_path = settings.value("wordlist_path", "")
+    words_file = Path(saved_path) if saved_path and Path(saved_path).exists() else cfg.words_file
+    
+    dictionary = Dictionary(words_file)
 
     window = MainWindow(dictionary, cfg)
     window.show()
