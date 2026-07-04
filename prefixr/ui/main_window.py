@@ -51,7 +51,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, Qt
+from PySide6.QtCore import QEvent, QSettings, Qt
 from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
@@ -386,6 +386,7 @@ class MainWindow(QMainWindow):
             return
 
         self._dictionary.reload(Path(path))
+        QSettings().setValue("wordlist_path", path)
 
         # Refresh all UI state
         self._error_banner.setVisible(not self._dictionary.is_loaded)
