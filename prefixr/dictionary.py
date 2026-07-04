@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import bisect
 import logging
+import random
 from enum import Enum, auto
 from pathlib import Path
 from typing import Sequence
@@ -36,27 +37,38 @@ class SortOrder(Enum):
     """Result ordering applied *after* the prefix range is sliced."""
 
     SHORTEST_FIRST = auto()
+    RANDOM         = auto()
     LONGEST_FIRST  = auto()
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 
     def toggled(self) -> "SortOrder":
-        """Return the other order — used by the Tab toggle."""
-        return (
-            SortOrder.LONGEST_FIRST
-            if self is SortOrder.SHORTEST_FIRST
-            else SortOrder.SHORTEST_FIRST
-        )
+        """
+        Return the next order in the cycle — used by the Tab toggle.
+
+        Cycle: SHORTEST_FIRST → RANDOM → LONGEST_FIRST → SHORTEST_FIRST …
+        Random sits between the two length-based extremes.
+        """
+        _NEXT = {
+            SortOrder.SHORTEST_FIRST: SortOrder.RANDOM,
+            SortOrder.RANDOM: SortOrder.LONGEST_FIRST,
+            SortOrder.LONGEST_FIRST: SortOrder.SHORTEST_FIRST,
+        }
+        return _NEXT[self]
 
     def button_label(self) -> str:
-        return "↑ Short" if self is SortOrder.SHORTEST_FIRST else "↓ Long"
+        return {
+            SortOrder.SHORTEST_FIRST: "↑ Short",
+            SortOrder.RANDOM: "Random",
+            SortOrder.LONGEST_FIRST: "↓ Long",
+        }[self]
 
     def tooltip(self) -> str:
-        return (
-            "Shortest matches first  [Tab to toggle]"
-            if self is SortOrder.SHORTEST_FIRST
-            else "Longest matches first  [Tab to toggle]"
-        )
+        return {
+            SortOrder.SHORTEST_FIRST: "Shortest matches first  [Tab to toggle]",
+            SortOrder.RANDOM: "Random match order  [Tab to toggle]",
+            SortOrder.LONGEST_FIRST: "Longest matches first  [Tab to toggle]",
+        }[self]
 
 
 # ── Dictionary engine ─────────────────────────────────────────────────────────
@@ -133,7 +145,9 @@ class Dictionary:
         4. Slice self._words[lo:hi] — this is a O(k) copy where k is the
            number of matching words, bounded by the words list size.
         5. Filter out used words.
-        6. Sort the slice by length; return the first max_results items.
+        6. Order the slice per *sort_order* — by length (ascending/descending)
+           for SHORTEST_FIRST/LONGEST_FIRST, or shuffled for RANDOM — then
+           return the first max_results items.
 
         The overall complexity is O(log n + k·log k) where n = vocabulary
         size and k = number of prefix matches.  In practice k << n for any
@@ -173,6 +187,13 @@ class Dictionary:
             matches = [w for w in matches if w not in self._used]
             if not matches:
                 return []
+
+        if sort_order is SortOrder.RANDOM:
+            # Shuffle a copy — matches may be a list slice or a filtered list,
+            # either way we must not mutate self._words in place.
+            shuffled = list(matches)
+            random.shuffle(shuffled)
+            return shuffled[:max_results]
 
         # Sort by length; ties broken by lexicographic order (stable sort)
         reverse = sort_order is SortOrder.LONGEST_FIRST
