@@ -1,6 +1,7 @@
 words.txt
 dist
 build
+tools
 venv
 __pycache__
 *.pyc
