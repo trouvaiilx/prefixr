@@ -14,6 +14,10 @@ Responsibilities
   the application window is active.
 • Display match count and vocabulary size in the status footer.
 • Show a prominent warning banner if words.txt could not be loaded.
+• Let the user lock the sort-order cycle (padlock button) so Tab / the sort
+  button stop changing it — the app launches with RANDOM order by default.
+• Show a "?" help button (bottom-right) that opens a tabbed dialog covering
+  About / How to Use / Shortcuts / Background Typing.
 
 Focus management strategy
 ─────────────────────────
@@ -66,6 +70,7 @@ from PySide6.QtWidgets import (
 from ..config import Config
 from ..dictionary import Dictionary, SortOrder
 from ..global_key_listener import GlobalKeyListener
+from .help_dialog import HelpDialog
 from .results_view import ResultsView
 from .search_bar import SearchBar
 from .styles import SEARCH_PLACEHOLDER, build_stylesheet
@@ -81,7 +86,10 @@ class MainWindow(QMainWindow):
         super().__init__()
         self._dictionary = dictionary
         self._cfg = cfg
-        self._sort_order: SortOrder = SortOrder.SHORTEST_FIRST
+        # RANDOM is the default order on launch — see the "Sort lock" note
+        # in the module docstring.
+        self._sort_order: SortOrder = SortOrder.RANDOM
+        self._sort_locked: bool = False
 
         # Background-typing state (see module docstring)
         self._typed_buffer: str = ""
@@ -129,6 +137,14 @@ class MainWindow(QMainWindow):
         self._sort_btn.setFixedHeight(44)
         self._sort_btn.setMinimumWidth(70)
         top_row.addWidget(self._sort_btn)
+
+        self._lock_btn = QPushButton("🔓")
+        self._lock_btn.setObjectName("lock_button")
+        self._lock_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._lock_btn.setToolTip("Lock sort order")
+        self._lock_btn.setFixedHeight(44)
+        self._lock_btn.setFixedWidth(36)
+        top_row.addWidget(self._lock_btn)
 
         root.addLayout(top_row)
 
@@ -183,6 +199,13 @@ class MainWindow(QMainWindow):
         self._lbl_wordcount.setObjectName("status_wordcount")
         footer.addWidget(self._lbl_wordcount)
 
+        self._help_btn = QPushButton("?")
+        self._help_btn.setObjectName("help_button")
+        self._help_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._help_btn.setToolTip("Help — about, usage, shortcuts")
+        self._help_btn.setFixedSize(22, 22)
+        footer.addWidget(self._help_btn)
+
         root.addLayout(footer)
 
     # ── Signal wiring ─────────────────────────────────────────────────────────
@@ -210,6 +233,12 @@ class MainWindow(QMainWindow):
 
         # Wordlist switching
         self._search_bar.f1_pressed.connect(self._on_switch_wordlist)
+
+        # Sort-order lock
+        self._lock_btn.clicked.connect(self._toggle_sort_lock)
+
+        # Help dialog
+        self._help_btn.clicked.connect(self._on_show_help)
 
     # ── Slots ─────────────────────────────────────────────────────────────────
 
@@ -240,13 +269,40 @@ class MainWindow(QMainWindow):
         self._global_listener.start()
 
     def _toggle_sort(self) -> None:
-        """Flip between shortest-first and longest-first, then re-run search."""
+        """
+        Cycle shortest-first → random → longest-first, then re-run search.
+        No-ops while the sort order is locked (see _toggle_sort_lock) — both
+        the Tab key and the sort button route through here, so guarding this
+        single method is enough to cover both entry points.
+        """
+        if self._sort_locked:
+            self._search_bar.setFocus(Qt.FocusReason.OtherFocusReason)
+            return
         self._sort_order = self._sort_order.toggled()
         self._sort_btn.setText(self._sort_order.button_label())
         self._sort_btn.setToolTip(self._sort_order.tooltip())
         # Re-search with the same prefix under the new order
         self._on_text_changed(self._search_bar.text())
         # Ensure keyboard focus stays on the input field
+        self._search_bar.setFocus(Qt.FocusReason.OtherFocusReason)
+
+    def _toggle_sort_lock(self) -> None:
+        """
+        Lock or unlock the current sort order. While locked, neither Tab
+        nor the sort button change it — useful once you've settled on the
+        order you want and don't want a stray Tab press to disturb it.
+        """
+        self._sort_locked = not self._sort_locked
+        self._lock_btn.setText("🔒" if self._sort_locked else "🔓")
+        self._lock_btn.setToolTip(
+            "Unlock sort order" if self._sort_locked else "Lock sort order"
+        )
+        self._sort_btn.setEnabled(not self._sort_locked)
+        self._sort_btn.setToolTip(
+            f"Sort order locked ({self._sort_order.button_label()})"
+            if self._sort_locked
+            else self._sort_order.tooltip()
+        )
         self._search_bar.setFocus(Qt.FocusReason.OtherFocusReason)
 
     def _on_enter_pressed(self) -> None:
@@ -400,4 +456,10 @@ class MainWindow(QMainWindow):
         self._search_bar.clear()
         self._results_view.clear_display()
         self._lbl_matches.setText(self._matches_text(0, empty=True))
+        self._search_bar.setFocus(Qt.FocusReason.OtherFocusReason)
+
+    def _on_show_help(self) -> None:
+        """Open the tabbed '?' help dialog (About / How to Use / Shortcuts / Background Typing)."""
+        dialog = HelpDialog(self._cfg, self)
+        dialog.exec()
         self._search_bar.setFocus(Qt.FocusReason.OtherFocusReason)

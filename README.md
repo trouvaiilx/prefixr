@@ -5,16 +5,16 @@ Inspired by **Spotlight** and **Flow Launcher** — dark-mode, keyboard-driven, 
 
 ```
 ┌────────────────────────────────────────────────────┐
-│  pre█                                  [SHORT ↑]   │
+│  pre█                                 [Random] [🔓]     
 │  ────────────────────────────────────────────────  │
-│  pre                                               │
-│  preach                                            │
-│  precede                                           │
 │  precise                                           │
-│  prefer                                            │
-│  premier                                           │
 │  prepare                                           │
+│  preach                                            │
+│  prefer                                            │
+│  precede                                           │
+│  premier                                           │
 │  …                                                 │
+│  3 matches                                    (?)  │
 └────────────────────────────────────────────────────┘
 ```
 
@@ -27,7 +27,9 @@ Inspired by **Spotlight** and **Flow Launcher** — dark-mode, keyboard-driven, 
 - [Project structure](#project-structure)
 - [Packaging into a single executable](#packaging-into-a-single-executable)
 - [Keyboard reference](#keyboard-reference)
+- [Sort order & the lock](#sort-order--the-lock)
 - [Background typing (out-of-focus word tracking)](#background-typing-out-of-focus-word-tracking)
+- [In-app help](#in-app-help)
 - [Extending](#extending)
 
 ---
@@ -38,13 +40,15 @@ Inspired by **Spotlight** and **Flow Launcher** — dark-mode, keyboard-driven, 
 |---|---|
 | **Prefix search** | `bisect_left` binary search — O(log n + k) on 466 k words |
 | **Always-focused input** | Caret returns automatically on Alt-Tab / window activation |
-| **Sort toggle** | `Tab` or the button cycles shortest-first → random → longest-first |
+| **Sort toggle** | `Tab` or the button cycles shortest-first → random → longest-first (launches on **random**) |
+| **Sort lock** | Click the padlock next to the sort button to freeze the current order — `Tab` and the button both stop cycling until you unlock it |
 | **Prefix highlighting** | The typed prefix is highlighted in every result, at a glance |
 | **Background typing** | While Alt-Tabbed into another app, keeps tracking what you type and highlights each result green/red per letter — see below |
 | **Escape to clear** | Clears the search field; window stays open |
 | **No console** | `.pyw` entry-point suppresses the Windows console window |
 | **Dark mode** | Blue-tinted near-black palette, Spotlight-inspired |
 | **Wordlist switching** | Press `F1` to load a different `.txt` word list on the fly (persists across restarts via native OS settings) |
+| **In-app help** | Click the `?` button (bottom-right) for a tabbed reference: About / How to Use / Shortcuts / Background Typing |
 
 ---
 
@@ -113,6 +117,7 @@ prefixr/
     ├── styles.py          Full dark-mode QSS stylesheet
     ├── search_bar.py      Always-focused QLineEdit + focus recovery
     ├── results_view.py    Rich-text result rows: prefix highlight + typing overlay
+    ├── help_dialog.py     Tabbed '?' help window (About / Usage / Shortcuts / Background Typing)
     └── main_window.py     Mediator — wires all components together
 ```
 
@@ -175,11 +180,35 @@ The `words.txt` word list is bundled inside the executable — no external files
 |---|---|
 | Any letter | Instant prefix search |
 | `Backspace` | Narrow/widen search |
-| `Tab` | Cycle result sort order (shortest → random → longest) |
+| `Tab` | Cycle result sort order (shortest → random → longest) — no-op while locked |
 | `Escape` | Clear search field |
 | `↑` / `↓` | Move the keyboard highlight through results |
 | `Enter` (focused) | Confirm the highlighted result / mark it used |
 | `F1` | Open file picker to switch word list |
+
+The padlock button and `?` help button are mouse-only; they don't have
+dedicated key shortcuts.
+
+---
+
+## Sort order & the lock
+
+Prefixr now **launches with random order by default** rather than
+shortest-first — the idea being that with a large word list, a fixed
+"shortest first" order tends to surface the same handful of short words
+over and over, while random keeps every search feeling fresh.
+
+Next to the sort button is a padlock (🔓 / 🔒):
+
+- **Unlocked (🔓, default)** — `Tab` and the sort button both cycle
+  shortest → random → longest as before.
+- **Locked (🔒)** — click the padlock to freeze whatever order is currently
+  active. The sort button becomes visibly disabled and both `Tab` and
+  clicking it stop changing the order, until you click the padlock again
+  to unlock it.
+
+This is useful once you've found the ordering you like for a session and
+want to make sure a stray `Tab` press doesn't shuffle it.
 
 ---
 
@@ -202,6 +231,24 @@ This only activates while the search field actually has a prefix in it —
 with an empty search field, no keystrokes are observed anywhere, focused or
 not. It's also a passive observer: it never blocks or consumes a keystroke,
 so the app you're typing into always receives every key normally.
+
+---
+
+## In-app help
+
+Click the small `?` button in the bottom-right corner of the window to open
+a help dialog. To keep things readable, it's split into four tabs instead
+of one long page:
+
+| Tab | Contents |
+|---|---|
+| **About** | What Prefixr is and how it's built |
+| **How to Use** | A short walkthrough of the core search/select flow |
+| **Shortcuts** | The full keyboard reference, in one table |
+| **Background Typing** | How the out-of-focus tracking feature works |
+
+The dialog is modal and mouse-driven — closing it returns keyboard focus
+straight back to the search bar.
 
 ---
 

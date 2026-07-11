@@ -149,6 +149,53 @@ QPushButton#sort_button:pressed {{
     color: #ccccee;
 }}
 
+/* ── Sort-lock button ──────────────────────────────────────────────── */
+QPushButton#lock_button {{
+    background-color: #1e1e2c;
+    color: #8888aa;
+    border: 1px solid #2a2a3e;
+    border-radius: 7px;
+    font-size: 14px;
+}}
+
+QPushButton#lock_button:hover {{
+    background-color: #26263a;
+    border-color: #3a3a5a;
+}}
+
+QPushButton#lock_button:pressed {{
+    background-color: #2e2e48;
+}}
+
+/* ── Sort button, disabled while locked ───────────────────────────── */
+QPushButton#sort_button:disabled {{
+    background-color: #191922;
+    color: #4a4a62;
+    border-color: #24243030;
+}}
+
+/* ── Help ('?') button ─────────────────────────────────────────────── */
+QPushButton#help_button {{
+    background-color: #1e1e2c;
+    color: #8888aa;
+    border: 1px solid #2a2a3e;
+    border-radius: 11px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: {ff};
+}}
+
+QPushButton#help_button:hover {{
+    background-color: #26263a;
+    color: #aaaacc;
+    border-color: #3a3a5a;
+}}
+
+QPushButton#help_button:pressed {{
+    background-color: #2e2e48;
+    color: #ccccee;
+}}
+
 /* ── Reset button ──────────────────────────────────────────────────── */
 QPushButton#reset_button {{
     background-color: transparent;
@@ -203,6 +250,60 @@ QLabel#error_banner {{
     padding: 8px 14px;
     font-size: {fs}px;
     font-family: {ff};
+}}
+
+/* ── Help dialog ───────────────────────────────────────────────────── */
+QDialog#help_dialog {{
+    background-color: #13131b;
+}}
+
+QWidget#help_panel {{
+    background-color: transparent;
+}}
+
+QLabel#help_panel_label {{
+    color: #d0d0e8;
+    font-size: {fs}px;
+    font-family: {ff};
+}}
+
+QLabel#help_panel_label h2,
+QLabel#help_panel_label h3 {{
+    color: #e8e8f5;
+}}
+
+QScrollArea#help_scroll {{
+    background-color: transparent;
+    border: none;
+}}
+
+QTabWidget#help_tabs::pane {{
+    border-top: 1px solid #2e2e40;
+    background-color: #13131b;
+}}
+
+QTabWidget#help_tabs QTabBar::tab {{
+    background-color: #1c1c26;
+    color: #8888aa;
+    border: 1px solid #2a2a3e;
+    border-bottom: none;
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-family: {ff};
+    font-weight: 500;
+}}
+
+QTabWidget#help_tabs QTabBar::tab:selected {{
+    background-color: #22222e;
+    color: #e8e8f5;
+    border-color: #3a3a5a;
+}}
+
+QTabWidget#help_tabs QTabBar::tab:hover:!selected {{
+    background-color: #26263a;
+    color: #aaaacc;
 }}
 
 """
