@@ -1,7 +1,23 @@
-words.txt
-dist
-build
-venv
-__pycache__
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Frontend build output
+dist/
+dist-ssr/
+*.local
+
+# Rust / Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/
+**/*.rs.bk
+
+# Logs & OS files
+*.log
+.DS_Store
+Thumbs.db
+
+# Python tools cache
+__pycache__/
 *.pyc
-*.spec
+venv/
